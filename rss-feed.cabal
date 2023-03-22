@@ -28,9 +28,17 @@ library
     hs-source-dirs:   src
     build-depends:
       base,
-      xml
+      xml,
+      aeson,
+      bytestring,
+      text,
+      wreq,
+      lens
     exposed-modules:
       RssFeed
+        RssFeed.Parse
+        RssFeed.Types
+        RssFeed.Feed
 
 executable rss-feed
     main-is:          Main.hs
@@ -42,7 +50,12 @@ executable rss-feed
     -- other-extensions:
     build-depends:
       base ^>=4.16.4.0,
-      rss-feed
+      rss-feed,
+      wreq,
+      lens,
+      bytestring,
+      text,
+      utf8-string,
     ghc-options:
       -O
     hs-source-dirs:   app
