@@ -55,7 +55,7 @@ executable rss-feed
       lens,
       bytestring,
       text,
-      utf8-string,
+      utf8-string
     ghc-options:
       -O
     hs-source-dirs:   app

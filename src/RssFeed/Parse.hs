@@ -34,7 +34,9 @@ parseItem el =
   let title = getTextFromChild el (unqual "title")
       link = getTextFromChild el (unqual "link")
       description = getTextFromChild el (unqual "description")
-   in Item <$> title <*> link <*> description
+      pubDate = getTextFromChild el (unqual "pubDate")
+      category = getTextFromChild el (unqual "category")
+   in Item <$> title <*> link <*> description <*> pure pubDate <*> pure category
 
 parseItems :: [Element] -> [Item]
 parseItems =

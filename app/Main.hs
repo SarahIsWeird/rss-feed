@@ -2,7 +2,7 @@ module Main where
 
 import Control.Exception (catch)
 import Control.Lens
-import Control.Monad (when)
+import Control.Monad (forM_, when)
 import qualified Data.ByteString.Lazy.UTF8 as BLU
 import Data.Foldable (for_)
 import Network.Wreq
@@ -12,16 +12,23 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure)
 
 printChannel :: RssFeed.Channel -> IO ()
-printChannel (RssFeed.Channel title url description _) = do
+printChannel (RssFeed.Channel title url description items) = do
   putStrLn (title <> " (" <> url <> ")")
   putStrLn description
   putStrLn ""
+  forM_ items printItem
+
+putStrLnPrefix :: String -> String -> IO ()
+putStrLnPrefix prefix value =
+  putStrLn (prefix <> value)
 
 printItem :: RssFeed.Item -> IO ()
-printItem (RssFeed.Item title url description) = do
+printItem (RssFeed.Item title url description pubDate category) = do
+  putStrLn title
+  putStrLnPrefix "Link: " url
+  for_ pubDate (putStrLnPrefix "Date: ")
+  for_ category (putStrLnPrefix "Category: ")
   putStrLn ""
-  putStrLn (title <> " (" <> url <> ")")
-  putStrLn description
 
 fetchAndPrintFeedInfo :: RssFeed.Feed -> IO ()
 fetchAndPrintFeedInfo (RssFeed.Feed _ url) = do
@@ -37,16 +44,9 @@ fetchAndPrintFeedInfo (RssFeed.Feed _ url) = do
 
 main :: IO ()
 main = do
-  feeds <- readFeedConfig "/Users/sarah/Programming/Haskell/rss-feed/feeds.json"
+  feeds <- readFeedConfig "feeds.json"
   case feeds of
     Left e -> do
       putStrLn e
       exitFailure
     Right feeds -> mapM_ fetchAndPrintFeedInfo feeds
-  rss <- getContents
-  let channel = RssFeed.parseRss rss
-  case channel of
-    Nothing -> putStrLn "Couldn't read file."
-    Just channel -> do
-      printChannel channel
-      for_ (RssFeed.cItems channel) printItem

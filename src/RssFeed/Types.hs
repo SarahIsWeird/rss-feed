@@ -18,7 +18,9 @@ data Channel = Channel
 data Item = Item
   { iTitle :: String,
     iLink :: Url,
-    iDescription :: String
+    iDescription :: String,
+    iPubDate :: Maybe String,
+    iCategory :: Maybe String
   }
 
 data Feed = Feed
