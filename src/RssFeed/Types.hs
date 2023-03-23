@@ -6,6 +6,8 @@ import Control.Applicative (empty)
 import Data.Aeson
 import qualified Data.Text as T
 
+-- XML data
+
 type Url = String
 
 data Channel = Channel
@@ -20,12 +22,29 @@ data Item = Item
     iLink :: Url,
     iDescription :: String,
     iPubDate :: Maybe String,
-    iCategory :: Maybe String
+    iCategory :: Maybe String,
+    iGuid :: Maybe String,
+    iRead :: Bool
   }
+
+-- Parsed data
+
+data PostID
+  = TitleID String
+  | Guid String
+  deriving (Show, Eq)
+
+instance FromJSON PostID where
+  parseJSON = withObject "PostID" $ \obj -> do
+    title <- obj .:? "title"
+    case title of
+      Just t -> return (TitleID t)
+      Nothing -> fmap Guid (obj .: "guid")
 
 data Feed = Feed
   { fName :: String,
-    fUrl :: String
+    fUrl :: String,
+    fReadPosts :: [PostID]
   }
   deriving (Show)
 
@@ -35,5 +54,6 @@ instance FromJSON Feed where
   parseJSON (Object v) =
     let name = v .: "name"
         url = v .: "url"
-     in Feed <$> (T.unpack <$> name) <*> (T.unpack <$> url)
+        readPosts = v .: "read_posts"
+     in Feed <$> (T.unpack <$> name) <*> (T.unpack <$> url) <*> readPosts
   parseJSON _ = empty

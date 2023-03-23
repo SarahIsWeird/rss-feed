@@ -29,33 +29,44 @@ getTextFromChild :: Element -> QName -> Maybe String
 getTextFromChild el name =
   findChild name el >>= extractText . elContent
 
-parseItem :: Element -> Maybe Item
-parseItem el =
+hasPostBeenRead :: [PostID] -> Maybe String -> Maybe String -> Maybe Bool
+hasPostBeenRead readPosts guid title =
+  case guid of
+    Just g -> Just $ elem (Guid g) readPosts
+    Nothing ->
+      case title of
+        Just t -> Just $ elem (TitleID t) readPosts
+        Nothing -> Nothing
+
+parseItem :: [PostID] -> Element -> Maybe Item
+parseItem readPosts el =
   let title = getTextFromChild el (unqual "title")
       link = getTextFromChild el (unqual "link")
       description = getTextFromChild el (unqual "description")
       pubDate = getTextFromChild el (unqual "pubDate")
       category = getTextFromChild el (unqual "category")
-   in Item <$> title <*> link <*> description <*> pure pubDate <*> pure category
+      guid = getTextFromChild el (unqual "guid")
+      hasBeenRead = hasPostBeenRead readPosts guid title
+   in Item <$> title <*> link <*> description <*> pure pubDate <*> pure category <*> pure guid <*> hasBeenRead
 
-parseItems :: [Element] -> [Item]
-parseItems =
+parseItems :: [PostID] -> [Element] -> [Item]
+parseItems readPosts =
   concatMap
-    ( \el -> case parseItem el of
+    ( \el -> case parseItem readPosts el of
         Nothing -> []
         Just item -> [item]
     )
 
-parseChannel :: Element -> Maybe Channel
-parseChannel el =
+parseChannel :: [PostID] -> Element -> Maybe Channel
+parseChannel readPosts el =
   let title = getTextFromChild el (unqual "title")
       link = getTextFromChild el (unqual "link")
       description = getTextFromChild el (unqual "description")
-      items = parseItems $ findChildren (unqual "item") el
+      items = parseItems readPosts $ findChildren (unqual "item") el
    in Channel <$> title <*> link <*> description <*> Just items
 
-parseDocument :: Element -> Maybe Channel
-parseDocument el = getRss20Channel el >>= parseChannel
+parseDocument :: [PostID] -> Element -> Maybe Channel
+parseDocument readPosts el = getRss20Channel el >>= parseChannel readPosts
 
-parseRss :: String -> Maybe Channel
-parseRss raw = parseXMLDoc raw >>= parseDocument
+parseRss :: [PostID] -> String -> Maybe Channel
+parseRss readPosts raw = parseXMLDoc raw >>= parseDocument readPosts
