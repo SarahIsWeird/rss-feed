@@ -33,7 +33,8 @@ library
       bytestring,
       text,
       wreq,
-      lens
+      lens,
+      containers,
     exposed-modules:
       RssFeed
         RssFeed.Parse
@@ -53,6 +54,8 @@ executable rss-feed
       text,
       utf8-string,
       optparse-applicative,
+      containers,
+      aeson,
     ghc-options:
       -O
     hs-source-dirs:   app

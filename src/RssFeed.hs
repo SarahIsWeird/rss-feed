@@ -6,6 +6,7 @@ module RssFeed
     Url,
     parseRss,
     readFeedConfig,
+    getPostId,
   )
 where
 
