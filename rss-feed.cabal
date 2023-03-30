@@ -35,6 +35,7 @@ library
       wreq,
       lens,
       containers,
+      directory,
     exposed-modules:
       RssFeed
         RssFeed.Parse
