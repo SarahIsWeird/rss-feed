@@ -20,7 +20,9 @@ import System.IO (hPutStrLn, stderr)
 printChannel :: RssFeed.Channel -> IO ()
 printChannel (RssFeed.Channel title url description items) = do
   putStrLn (title <> " (" <> url <> ")")
-  putStrLn description
+  case description of
+    Nothing -> putStrLn "(No description)"
+    Just d -> putStrLn d
   putStrLn ""
   forM_ items printItem
 
@@ -109,6 +111,25 @@ markRead feeds (OptParse.FeedName feedName) (OptParse.PostName postName) = do
             Nothing -> putStrLn $ "No post with the title \"" <> postName <> "\"!"
             Just id -> BL.writeFile "feeds.json" $ encode $ markReadInFeeds feeds feedName id
 
+addFeed :: RssFeed.Feeds -> OptParse.FeedName -> OptParse.FeedUrl -> IO ()
+addFeed feeds (OptParse.FeedName feedName) (OptParse.FeedUrl feedUrl) =
+  let feedsWithThatUrl = Map.filter (\a -> RssFeed.fUrl a == feedUrl) feeds
+   in case Map.toList feedsWithThatUrl of
+        [] ->
+          let feedsWithThatName = Map.filter (\a -> RssFeed.fName a == feedName) feeds
+           in case Map.toList feedsWithThatName of
+                [] -> BL.writeFile "feeds.json" $ encode $ Map.insert feedName (RssFeed.Feed feedName feedUrl []) feeds
+                [(_, feed)] -> putStrLn $ "That feed name already exists with the URL \"" <> RssFeed.fUrl feed <> "\"!"
+                _ -> putStrLn "That feed name exists multiple times already! Did you edit your feeds.json manually?"
+        [(name, _)] -> putStrLn $ "That feed already exists with the name \"" <> name <> "\"!"
+        _ -> putStrLn "That feed exists multiple times already! Did you edit your feeds.json manually?"
+
+removeFeed :: RssFeed.Feeds -> OptParse.FeedName -> IO ()
+removeFeed feeds (OptParse.FeedName feedName) =
+  case Map.lookup feedName feeds of
+    Nothing -> putStrLn $ "No feed with the name \"" <> feedName <> "\" found!"
+    Just _ -> BL.writeFile "feeds.json" $ encode $ Map.delete feedName feeds
+
 main :: IO ()
 main = do
   feeds <- readFeedConfig "feeds.json"
@@ -122,3 +143,5 @@ main = do
         OptParse.ListFeeds -> listFeeds f
         OptParse.ListPosts feedName showRead -> listPosts f feedName showRead
         OptParse.MarkRead feedName postName -> markRead f feedName postName
+        OptParse.AddFeed feedName feedUrl -> addFeed f feedName feedUrl
+        OptParse.RemoveFeed feedName -> removeFeed f feedName

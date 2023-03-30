@@ -3,6 +3,7 @@ module OptParse
     FeedName (..),
     PostName (..),
     ShowRead (..),
+    FeedUrl (..),
     parse,
   )
 where
@@ -13,6 +14,8 @@ data Options
   = ListFeeds
   | ListPosts FeedName ShowRead
   | MarkRead FeedName PostName
+  | AddFeed FeedName FeedUrl
+  | RemoveFeed FeedName
   deriving (Show)
 
 newtype FeedName
@@ -26,6 +29,10 @@ newtype PostName
 data ShowRead
   = HideReadPosts
   | ShowReadPosts
+  deriving (Show)
+
+newtype FeedUrl
+  = FeedUrl String
   deriving (Show)
 
 pFeedName :: Parser FeedName
@@ -58,6 +65,16 @@ pShowRead =
         <> help "Show read posts"
     )
 
+pFeedUrl :: Parser FeedUrl
+pFeedUrl = FeedUrl <$> parser
+  where
+    parser =
+      argument
+        str
+        ( metavar "<url>"
+            <> help "Feed URL"
+        )
+
 pListFeeds :: Parser Options
 pListFeeds = pure ListFeeds
 
@@ -66,6 +83,12 @@ pListPosts = ListPosts <$> pFeedName <*> pShowRead
 
 pMarkRead :: Parser Options
 pMarkRead = MarkRead <$> pFeedName <*> pPostName
+
+pAddFeed :: Parser Options
+pAddFeed = AddFeed <$> pFeedName <*> pFeedUrl
+
+pRemoveFeed :: Parser Options
+pRemoveFeed = RemoveFeed <$> pFeedName
 
 pOptions :: Parser Options
 pOptions =
@@ -87,6 +110,18 @@ pOptions =
           ( info
               (helper <*> pMarkRead)
               (progDesc "Mark a post as read")
+          )
+        <> command
+          "add"
+          ( info
+              (helper <*> pAddFeed)
+              (progDesc "Add an RSS feed to your feeds")
+          )
+        <> command
+          "remove"
+          ( info
+              (helper <*> pRemoveFeed)
+              (progDesc "Remove an RSS feed from your feeds")
           )
     )
 

@@ -63,7 +63,7 @@ parseChannel readPosts el =
       link = getTextFromChild el (unqual "link")
       description = getTextFromChild el (unqual "description")
       items = parseItems readPosts $ findChildren (unqual "item") el
-   in Channel <$> title <*> link <*> description <*> Just items
+   in Channel <$> title <*> link <*> pure description <*> Just items
 
 parseDocument :: [PostID] -> Element -> Maybe Channel
 parseDocument readPosts el = getRss20Channel el >>= parseChannel readPosts

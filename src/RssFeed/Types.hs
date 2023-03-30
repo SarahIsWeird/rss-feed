@@ -15,7 +15,7 @@ type Url = String
 data Channel = Channel
   { cTitle :: String,
     cLink :: Url,
-    cDescription :: String,
+    cDescription :: Maybe String,
     cItems :: [Item]
   }
 
